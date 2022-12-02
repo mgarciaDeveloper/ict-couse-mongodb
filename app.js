@@ -1,56 +1,67 @@
 const express = require('express');
 require("dotenv").config();
-const translate = require('translate-google')
-
 const MongoStore = require("connect-mongo");
 const mongoose = require('mongoose');
-
+const passport = require('passport')
+const session = require('express-session')
+const cors = require('cors');
 const app = express()
 const port = 3000
 
 
-async function callbackTest(valor, callBack) {
-    let result = await valor.map((e, i) => {
-        return {
-            novaProp: `${i} : ${e}`
+
+
+const translate = require('translate-google')
+
+const tradutor = async (mensagem, callback) => {
+    translate(mensagem, { to: 'pt' }).then(async (res) => {
+        if (res) {
+            return callback(res)
         }
-    })
-    if (!callBack) {
-        return result
-    } else {
-        return callBack(result)
     }
+    ).catch(err => {
+        callback('erro na tradução!')
+    })
 }
-let novoArray = callbackTest(['valor1', 'valor2', 'Valor3', 'valor1', 'valor2', 'Valor3', 'valor1', 'valor2', 'Valor3', 'valor1', 'valor2', 'Valor3', 'valor1', 'valor2', 'Valor3'])
-console.log(novoArray)
 
-callbackTest(
-    ['valor1', 'valor2', 'Valor3', 'valor1', 'valor2', 'Valor3', 'valor1', 'valor2', 'Valor3', 'valor1', 'valor2', 'Valor3', 'valor1', 'valor2', 'Valor3'],
-    (resultadoDaFuncaoMae) => { console.log(resultadoDaFuncaoMae) }
-)
-
-
-//---imports
-
-// um projeto precisa de 01 DB que armazenará COLLECTIONS
-//EXEMPLO DA FAMÁRCIA: criaremos um DB chamado yagoPharma. essa DB armazena todos os dados da farmaácia. Esses dados ficam separados
-//em 'gavetas', que chamaremos de Collections.
-// Cada collection armazena uma família de documentos. 
-// collection1: filiais;
-// collection2: funcionarios;
-// collection3: remédios ;
-// Cada collection armazena objetos que têm os mesmos tipos de características, claro, com valores diferentes.
-
-//------ AULA 03
 mongoose.connect('mongodb+srv://matheus:caixaApp10@cluster0.kin8f.mongodb.net/yagoPharma?retryWrites=true&w=majority', { /* endereço do banco de dados */
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
 
+app.use(
+    cors({
+        origin: '*',
+        credentials:true
+    })
+);
 
-//------ AULA 01
+var estouEmDesenvolvimento = true;
 
-var functions = require('./functions/functions')
+app.use(
+    session(
+        {
+            cookie: estouEmDesenvolvimento //true para desenvolvimento e false para produção
+                ? null
+                : { secure: true, maxAge: 4 * 60 * 60000, sameSite: 'none' },
+            secret: 'TESTE1234', //Deve ficar salvo no .env
+            resave: false,
+            saveUninitialized: false,
+            store: estouEmDesenvolvimento
+                ? null
+                : MongoStore.create(
+                    {
+                        mongoUrl: 'mongodb+srv://matheus:caixaApp10@cluster0.kin8f.mongodb.net/yagoPharma?retryWrites=true&w=majority',
+
+                    },
+                    (err, resposta) => {
+                        console.log(`${err}/${resposta}`)
+                    })
+        }));
+
+
+var functions = require('./functions/functions');
+
 
 function traduzir(mensagem, funcao) {
     translate(mensagem, { to: 'pt' }).then(res => {
@@ -65,10 +76,28 @@ function traduzir(mensagem, funcao) {
 
 // Importar as collections
 var Product = require('./models/Products.js');
+var User = require('./models/Users')
+passport.use(User.createStrategy());
+passport.serializeUser(User.serializeUser())
+passport.deserializeUser(User.deserializeUser())
+
+var Affiliate = require('./models/Affiliates')
 
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    res.send('Você está acessando o servidor principal')
 })
+
+
+
+app.get('/traduzir', (req, res) => {
+    let msg = req.query.msg;
+    tradutor(msg,
+        (resposta) => {
+            res.send(resposta)
+        }
+    )
+})
+
 
 app.get('/products', (req, res) => {
 

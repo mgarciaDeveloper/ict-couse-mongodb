@@ -1,4 +1,5 @@
 var mongoose = require('mongoose')
+var passportLocalMongoose = require('passport-local-mongoose')
 
 var theSchema = {
     //característica: JS Type (essa característica é um Número ? É uma string ? )
@@ -12,8 +13,6 @@ var theSchema = {
         type: String,
         required: true,
     },
-
-
     pronome: {
         type: String,
         required: true,
@@ -24,7 +23,7 @@ var theSchema = {
 }
 
 const UsersSchema = new mongoose.Schema(theSchema);
-
+UsersSchema.plugin(passportLocalMongoose)
 //vamos criar a collection!!
 const User = mongoose.model('User', UsersSchema) //são dois campos: o nome da collection e o schema da collection
 
