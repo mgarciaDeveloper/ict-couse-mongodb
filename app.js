@@ -3,6 +3,7 @@ require("dotenv").config();
 const MongoStore = require("connect-mongo");
 const mongoose = require('mongoose');
 const passport = require('passport')
+const flash = require("req-flash");
 const session = require('express-session')
 const cors = require('cors');
 const app = express()
@@ -24,7 +25,7 @@ const tradutor = async (mensagem, callback) => {
     })
 }
 
-mongoose.connect('mongodb+srv://matheus:caixaApp10@cluster0.kin8f.mongodb.net/yagoPharma?retryWrites=true&w=majority', { /* endereço do banco de dados */
+mongoose.connect(process.env.MONGO_URL, { /* endereço do banco de dados */
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
@@ -32,31 +33,32 @@ mongoose.connect('mongodb+srv://matheus:caixaApp10@cluster0.kin8f.mongodb.net/ya
 app.use(
     cors({
         origin: '*',
-        credentials:true
+        credentials: true
     })
 );
 
-var estouEmDesenvolvimento = true;
+
 
 app.use(
     session(
         {
-            cookie: estouEmDesenvolvimento //true para desenvolvimento e false para produção
+            cookie: process.env.DEVELOPMENT //null para desenvolvimento e configurada para produção
                 ? null
                 : { secure: true, maxAge: 4 * 60 * 60000, sameSite: 'none' },
-            secret: 'TESTE1234', //Deve ficar salvo no .env
+            secret: process.env.SECRET,
             resave: false,
             saveUninitialized: false,
-            store: estouEmDesenvolvimento
+            store: process.env.DEVELOPMENT
                 ? null
                 : MongoStore.create(
                     {
-                        mongoUrl: 'mongodb+srv://matheus:caixaApp10@cluster0.kin8f.mongodb.net/yagoPharma?retryWrites=true&w=majority',
+                        mongoUrl: process.env.MONGO_URL,
 
                     },
                     (err, resposta) => {
                         console.log(`${err}/${resposta}`)
-                    })
+                    }
+                )
         }));
 
 
@@ -75,6 +77,10 @@ function traduzir(mensagem, funcao) {
 
 
 // Importar as collections
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash()); // ...
+
 var Product = require('./models/Products.js');
 var User = require('./models/Users')
 passport.use(User.createStrategy());
