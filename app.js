@@ -159,6 +159,29 @@ app.post('/theProduct', (req, res) => {
     })
 })
 
+app.post('/registerUser', (req, res) => {
+    if (req.query.username && req.query.password) {
+        //User.register(informações_de_cadastro, senha, callback_function)
+        User.register(
+            {
+                username: req.query.username
+            },
+            req.query.password,
+            (err, user) => {
+                if (err) {
+                    console.log(err)
+                    res.send('Erro no cadastro')
+                } else {
+                    res.send(user)
+                }
+            }
+
+        )
+    } else {
+        res.send('Não foi possível criar usuário')
+    }
+})
+
 // 
 app.post('/update/:identificador', async (req, res) => {
     console.log(req.query)
