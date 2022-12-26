@@ -7,6 +7,18 @@ var theSchema = {
     username: {
         type: String
     },
+    address: {
+        type: String
+    },
+    age: {
+        type: Number
+    },
+    income: {
+        type: String,
+        default:'até 8000',
+        enum:['Prefiro Não informar','até 2000', 'até 5000', 'até 8000', 'até 10000', 'até 15000', 'até 20000', 'mais de 20000']
+    }
+
 };
 const UsersSchema = new mongoose.Schema(theSchema);
 UsersSchema.plugin(passportLocalMongoose)

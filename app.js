@@ -32,7 +32,7 @@ mongoose.connect(process.env.MONGO_URL, { /* endereço do banco de dados */
 
 app.use(
     cors({
-        origin: '*',
+        origin: 'http://localhost:3001',
         credentials: true
     })
 );
@@ -75,7 +75,6 @@ function traduzir(mensagem, funcao) {
     })
 }
 
-
 // Importar as collections
 app.use(passport.initialize());
 app.use(passport.session());
@@ -92,6 +91,71 @@ var Affiliate = require('./models/Affiliates')
 app.get('/', (req, res) => {
     res.send('Você está acessando o servidor principal')
 })
+
+
+
+app.post('/registerUser', (req, res) => {
+    if (req.query.username && req.query.password) {
+        //User.register(informações_de_cadastro, senha, callback_function)
+        User.register(
+            {
+                username: req.query.username
+            },
+            req.query.password,
+            (err, user) => {
+                if (err) {
+                    console.log(err)
+                    res.send('Erro no cadastro')
+                } else {
+                    res.send(user)
+                }
+            }
+
+        )
+    } else {
+        res.send('Não foi possível criar usuário')
+    }
+})
+
+
+app.post('/login', (req, res, next) => {
+    console.log(req.params)
+    passport.authenticate('local', (err, obj) => {
+        if (err) {
+            console.log(err)
+            res.send({
+                status: false,
+                mensagem: 'Erro ao validar o usuário'
+            });
+        } else if (!obj) {
+            res.send({
+                status: false,
+                mensagem: 'usuário ou senha incorretos'
+            });
+        } else {
+            req.logIn(obj, (err) => {
+                if (err) {
+                    res.send({
+                        status: false,
+                        mensagem: 'Erro ao logar usuário'
+                    });
+                } else {
+                    res.send({
+                        status: true,
+                        mensagem: 'Usuário logado com sucesso!'
+                    });
+                }
+            })
+        }
+    })(req, res, next)
+
+})
+
+
+
+
+
+
 
 
 
@@ -157,29 +221,6 @@ app.post('/theProduct', (req, res) => {
             res.send(objetoSalvo)
         }
     })
-})
-
-app.post('/registerUser', (req, res) => {
-    if (req.query.username && req.query.password) {
-        //User.register(informações_de_cadastro, senha, callback_function)
-        User.register(
-            {
-                username: req.query.username
-            },
-            req.query.password,
-            (err, user) => {
-                if (err) {
-                    console.log(err)
-                    res.send('Erro no cadastro')
-                } else {
-                    res.send(user)
-                }
-            }
-
-        )
-    } else {
-        res.send('Não foi possível criar usuário')
-    }
 })
 
 // 
