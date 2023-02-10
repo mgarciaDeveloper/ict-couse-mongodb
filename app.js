@@ -105,6 +105,7 @@ app.get('/traduzir', (req, res) => {
 })
 
 
+//novo comentário feito no dia 10fev2023, a partir de um backup de dez/22
 app.get('/products', (req, res) => {
 
     if (req.query.identificador) {
